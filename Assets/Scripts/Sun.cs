@@ -8,17 +8,41 @@ public class Sun : MonoBehaviour
 {
     [SerializeField] private PlayerDamage player;
     [SerializeField] private Collider playerCollider;
-    [SerializeField] private DOTweenPath path;
+    //[SerializeField] private DOTweenPath path;
+    [SerializeField] private float lightAngle;
+    [SerializeField] private GameObject sunlight;
     private bool night;
 
     private float timer;
     private void Start()
     {
-        path.DOPlay();
-        night = false;
+        //path.DOPlay();
+        //night = false;
+        StartCoroutine(DayNightCycle());
     }
 
     private void Update()
+    {
+        Vector3 sunAngle = new Vector3(lightAngle, 0, 0);
+        Ray ray = new Ray(player.transform.position, sunAngle);
+        RaycastHit hit;
+        //sunlight.transform.Rotate(lightAngle, 0, 0); //robi dyskoteke, ale poprawne cyferki
+        
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity)) // to też nie działa
+        {
+            if (hit.collider || night)
+            {
+                player.exposed = false;
+                Debug.DrawRay(player.transform.position, -sunAngle * 100, Color.green);
+            }
+            else if (hit.collider == null && !night) 
+            {
+                player.exposed = true;
+                Debug.DrawRay(player.transform.position, -sunAngle * 100, Color.red);
+            }
+        }
+    }
+    /*private void Update()
     {
         Vector3 playerDirection = -transform.position + (player.transform.position + new Vector3(0, 1, 0));
         Ray ray = new Ray(transform.position, playerDirection * 100);
@@ -37,9 +61,33 @@ public class Sun : MonoBehaviour
                 Debug.DrawRay(transform.position, playerDirection * 100, Color.green);
             }
         }
-    }
+    }*/
 
-    public void Restart()
+    IEnumerator DayNightCycle()
+    {
+        while (true)
+        {
+            night = false;
+            sunlight.SetActive(true);
+            while (timer < 15)
+            {
+                timer += 1;
+                Debug.Log(timer);
+                var t = timer / 15;
+                lightAngle = Mathf.LerpAngle(45.0f, 135.0f, t); //nie
+                // lightAngle += 6; też robi syf
+                yield return new WaitForSeconds(1f);
+                //sunlight.transform.Rotate(lightAngle, 0, 0); //niepoprawne cyferki, skacze wszędzie ale nie tam gdzie trzeba
+            }
+
+            night = true;
+            sunlight.SetActive(false);
+            yield return new WaitForSeconds(15f);
+            timer = 0;
+        }
+    }
+    
+    /*public void Restart()
     {
         StartCoroutine(Finished());
     }
@@ -57,5 +105,5 @@ public class Sun : MonoBehaviour
         }
         night = false;
         path.DOPlay();
-    }
+    }*/
 }
